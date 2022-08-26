@@ -35,7 +35,7 @@ LemonDriveAudioProcessorEditor::LemonDriveAudioProcessorEditor (LemonDriveAudioP
     addAndMakeVisible(rangeSlider);
     
     addAndMakeVisible (rangeLabel);
-    rangeLabel.setText ("Range", juce::dontSendNotification);
+    rangeLabel.setText ("Destroy", juce::dontSendNotification);
     rangeLabel.attachToComponent (&rangeSlider, false);
 
     

@@ -68,16 +68,12 @@ private:
         HighCut
     };
     
-    
-    void updateLowCutFilter (const ChainSettings& chainSettings);
-    void updateHighCutFilter (const ChainSettings& chainSettings);
-    void updateFilters();
 
     void reset() override;
-    using Filter = juce::dsp::IIR::Filter<float>;
-    
-    using MonoChain = juce::dsp::ProcessorChain<Filter, Filter>;
-    MonoChain leftChain, rightChain;
+    //juce::dsp::IIR::Filter<float> filter;
+    juce::dsp::StateVariableTPTFilter<float> filter;
+        
+
     juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LemonDriveAudioProcessor)

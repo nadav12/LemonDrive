@@ -93,23 +93,17 @@ void LemonDriveAudioProcessor::changeProgramName (int index, const juce::String&
 //==============================================================================
 void LemonDriveAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
+    filter.setType(juce::dsp::StateVariableTPTFilterType::highpass);
+
     dsp::ProcessSpec spec;
     spec.sampleRate = sampleRate;
     spec.maximumBlockSize = samplesPerBlock;
     spec.numChannels = getTotalNumInputChannels();
-    updateFilters();
-    leftChain.prepare(spec);
-    rightChain.prepare(spec);
-}
-ChainSettings getChainSettings (juce::AudioProcessorValueTreeState& apvts)
-{
-    ChainSettings settings;
     
-    settings.lowCutFreq = apvts.getRawParameterValue ("LOWCUT")->load();
-    settings.highCutFreq = apvts.getRawParameterValue("HIGHCUT")->load();
-
-    return settings;
+    filter.prepare(spec);
+    reset();
 }
+
 void LemonDriveAudioProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
@@ -123,10 +117,7 @@ bool LemonDriveAudioProcessor::isBusesLayoutSupported (const BusesLayout& layout
     juce::ignoreUnused (layouts);
     return true;
   #else
-    // This is the place where you check if the layout is supported.
-    // In this template code we only support mono or stereo.
-    // Some plugin hosts, such as certain GarageBand versions, will only
-    // load plugins that support stereo bus layouts.
+
     if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
      && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
         return false;
@@ -143,34 +134,12 @@ bool LemonDriveAudioProcessor::isBusesLayoutSupported (const BusesLayout& layout
 #endif
 
 
-void LemonDriveAudioProcessor::updateLowCutFilter (const ChainSettings& chainSettings)
-{
-    auto lowCutCoefficients = juce::dsp::IIR::Coefficients<float>::makeFirstOrderHighPass (getSampleRate(),
-                                                                                 chainSettings.lowCutFreq
-                                                                                        );
-        
-    *leftChain.get<ChainPositions::LowCut>().coefficients = *lowCutCoefficients;
-    *rightChain.get<ChainPositions::LowCut>().coefficients = *lowCutCoefficients;
-}
-void LemonDriveAudioProcessor::updateHighCutFilter (const ChainSettings& chainSettings)
-{
-    auto highCutCoefficients = juce::dsp::IIR::Coefficients<float>::makeFirstOrderLowPass(getSampleRate(), chainSettings.highCutFreq);
-    *leftChain.get<ChainPositions::HighCut>().coefficients = *highCutCoefficients;
-    *rightChain.get<ChainPositions::HighCut>().coefficients = *highCutCoefficients;
-
-}
-void LemonDriveAudioProcessor::updateFilters()
-{
-    auto chainSettings = getChainSettings (apvts);
-    updateHighCutFilter(chainSettings);
-    updateLowCutFilter (chainSettings);
-}
 void LemonDriveAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
-    
+    filter.setCutoffFrequency(apvts.getRawParameterValue ("LOWCUT")->load());
     auto drive = apvts.getRawParameterValue("DRIVE");
     auto range = apvts.getRawParameterValue("RANGE");
     auto volume = apvts.getRawParameterValue("VOLUME");
@@ -184,18 +153,10 @@ void LemonDriveAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
     
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
     buffer.clear (i, 0, buffer.getNumSamples());
-    updateFilters();
 
-    juce::dsp::AudioBlock<float> block (buffer);
-    
-    auto leftBlock = block.getSingleChannelBlock (0);
-    auto rightBlock = block.getSingleChannelBlock (1);
-    
-    juce::dsp::ProcessContextReplacing<float> leftContext (leftBlock);
-    juce::dsp::ProcessContextReplacing<float> rightContext (rightBlock);
-    
-    leftChain.process (leftContext);
-    rightChain.process (rightContext);
+    auto audioBlock = juce::dsp::AudioBlock<float> (buffer);
+    auto context = juce::dsp::ProcessContextReplacing<float> (audioBlock);
+    filter.process (context);
     
     
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
@@ -245,8 +206,8 @@ void LemonDriveAudioProcessor::setStateInformation (const void* data, int sizeIn
 }
 void LemonDriveAudioProcessor::reset()
 {
-    rightChain.reset();
-    leftChain.reset();
+    filter.reset();
+
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout LemonDriveAudioProcessor:: createParameters()
@@ -254,9 +215,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout LemonDriveAudioProcessor:: c
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
     
     params.push_back(std::make_unique<juce::AudioParameterFloat>("DRIVE", "Drive", 0.f, 1.f, 0.2f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("RANGE", "Range", 1.f, 150.f, 40.f));
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("RANGE", "Range", 1.f, 10.f, 1.f));
     params.push_back(std::make_unique<juce::AudioParameterFloat>("VOLUME", "Volume", 0.f, 1.f, 0.999f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("LOWCUT", "LowCut", 20.f, 600.f, 250.f));
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("LOWCUT", "LowCut", 20.f, 300.f, 50.f));
     params.push_back(std::make_unique<juce::AudioParameterFloat>("HIGHCUT", "HighCut", 2000.f, 20000.f, 18000.f));
     params.push_back(std::make_unique<juce::AudioParameterFloat>("CURVE", "Curve", 0.f, 0.9f, 0.5f));
     return {params.begin(), params.end()};
