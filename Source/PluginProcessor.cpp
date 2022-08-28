@@ -93,7 +93,7 @@ void LemonDriveAudioProcessor::changeProgramName (int index, const juce::String&
 //==============================================================================
 void LemonDriveAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    filter.setType(juce::dsp::StateVariableTPTFilterType::highpass);
+    filter.setType(juce::dsp::LinkwitzRileyFilterType::highpass);
 
     dsp::ProcessSpec spec;
     spec.sampleRate = sampleRate;
@@ -140,17 +140,12 @@ void LemonDriveAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
     filter.setCutoffFrequency(apvts.getRawParameterValue ("LOWCUT")->load());
-    auto drive = apvts.getRawParameterValue("DRIVE");
-    auto range = apvts.getRawParameterValue("RANGE");
-    auto volume = apvts.getRawParameterValue("VOLUME");
-    auto curve = apvts.getRawParameterValue("CURVE");
+    float drive = apvts.getRawParameterValue("DRIVE")->load();
+    float range = apvts.getRawParameterValue("RANGE")->load();
+    float volume = apvts.getRawParameterValue("VOLUME")->load();
+    float curve = apvts.getRawParameterValue("CURVE")->load();
   
-    float driver = drive->load();
-    float ranger = range->load();
-    float volumer = volume->load();
-    float curver = curve->load();
 
-    
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
     buffer.clear (i, 0, buffer.getNumSamples());
 
@@ -166,10 +161,10 @@ void LemonDriveAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
         for(int sample = 0; sample < buffer.getNumSamples(); sample ++)
         {
 
-            channelData[sample] *= (driver * ranger);
+            channelData[sample] *= (Decibels::decibelsToGain(drive) * range);
 
-            auto drivenSignal = 2.0f / M_PI * atan(M_PI/(1-curver) * channelData[sample]);
-            channelData[sample] = drivenSignal * volumer;
+            auto drivenSignal = 2.0f / _pi * atan(_pi/(1-curve) * channelData[sample]);
+            channelData[sample] = drivenSignal * volume;
 
         }
         
@@ -214,8 +209,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout LemonDriveAudioProcessor:: c
 {
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
     
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("DRIVE", "Drive", 0.f, 1.f, 0.2f));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>("RANGE", "Range", 1.f, 10.f, 1.f));
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("DRIVE", "Drive", -50.f, 0.f, -20.f));
+    params.push_back(std::make_unique<juce::AudioParameterFloat>("RANGE", "Range", 1.f, 4.f, 1.f));
     params.push_back(std::make_unique<juce::AudioParameterFloat>("VOLUME", "Volume", 0.f, 1.f, 0.999f));
     params.push_back(std::make_unique<juce::AudioParameterFloat>("LOWCUT", "LowCut", 20.f, 300.f, 50.f));
     params.push_back(std::make_unique<juce::AudioParameterFloat>("HIGHCUT", "HighCut", 2000.f, 20000.f, 18000.f));

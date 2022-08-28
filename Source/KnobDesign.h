@@ -63,15 +63,9 @@ public:
         l->setColour (juce::Label::textWhenEditingColourId, slider.findColour (juce::Slider::textBoxTextColourId));
         l->setColour (juce::Label::outlineWhenEditingColourId, juce::Colours::transparentWhite);
         l->setInterceptsMouseClicks (false, false);
-        l->setFont (14.0f);
+        l->setFont (0.0f);
 
         return l;
     }
 
-
-//    KnobDesign(){
-//        setColour(Slider::rotarySliderOutlineColourId, Colours::rebeccapurple);
-//        setColour(Slider::rotarySliderFillColourId, Colours::rebeccapurple);
-//        setColour(Slider::thumbColourId, Colours::yellowgreen);
-//    }
 };

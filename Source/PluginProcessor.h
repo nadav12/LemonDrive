@@ -70,9 +70,8 @@ private:
     
 
     void reset() override;
-    //juce::dsp::IIR::Filter<float> filter;
-    juce::dsp::StateVariableTPTFilter<float> filter;
-        
+    juce::dsp::LinkwitzRileyFilter<float> filter;
+    float _pi = juce::MathConstants<float>::pi;
 
     juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
     //==============================================================================

@@ -20,7 +20,7 @@ class TLabel : public juce::Label
         
        setJustificationType(juce::Justification::centredBottom);
         setFont (juce::Font (16.0f, juce::Font::bold));
-        setColour (juce::Label::textColourId, juce::Colours::Sblackblue);
+        setColour (juce::Label::textColourId, juce::Colours::darkblue);
     }
 
 

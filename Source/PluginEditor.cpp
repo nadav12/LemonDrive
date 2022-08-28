@@ -27,7 +27,7 @@ LemonDriveAudioProcessorEditor::LemonDriveAudioProcessorEditor (LemonDriveAudioP
 
 
     driveSliderAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.apvts, "DRIVE", driveSlider);
-//    driveSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (audioProcessor.apvts, "DRIVE", driveSlider));
+
     //===============================================================================================================
     //range
 
@@ -35,12 +35,11 @@ LemonDriveAudioProcessorEditor::LemonDriveAudioProcessorEditor (LemonDriveAudioP
     addAndMakeVisible(rangeSlider);
     
     addAndMakeVisible (rangeLabel);
-    rangeLabel.setText ("Destroy", juce::dontSendNotification);
+    rangeLabel.setText ("Range", juce::dontSendNotification);
     rangeLabel.attachToComponent (&rangeSlider, false);
 
     
     rangeSliderAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.apvts, "RANGE", rangeSlider);
-    //===============================================================================================================
 
     //===============================================================================================================
     //volume
@@ -67,25 +66,7 @@ LemonDriveAudioProcessorEditor::LemonDriveAudioProcessorEditor (LemonDriveAudioP
     cutOffLabel.attachToComponent (&cutOffSlider, false);
     
     cutOffSliderAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.apvts, "LOWCUT", cutOffSlider);
-//    cutOffSlider.setSkewFactorFromMidPoint(1200.0);
- 
-    
-    //===============================================================================================================
-   //Cut Off
-
-//   highCutSlider.setLookAndFeel(&knobDesign);
-//
-//   addAndMakeVisible(highCutSlider);
-//
-//   addAndMakeVisible (highCutLabel);
-//    highCutLabel.setText ("High Cut", juce::dontSendNotification);
-//    highCutLabel.attachToComponent (&highCutSlider, false);
-//    highCutLabel.setJustificationType(juce::Justification::centredBottom);
-//
-//   highCutSliderAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.apvts, "HIGHCUT", highCutSlider);
-//   highCutSlider.setSkewFactorFromMidPoint(1200.0);
-
-     //===============================================================================================================
+// ================================
     curveSlider.setLookAndFeel(&knobDesign);
     addAndMakeVisible(curveSlider);
     addAndMakeVisible (curveLabel);
